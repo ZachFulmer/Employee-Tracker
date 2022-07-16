@@ -97,7 +97,57 @@ function viewAllRoles()
 // Add Role
 function addRole()
 {
-    
+    const sql = `SELECT name FROM department`;
+    db.query(sql, (err, rows) =>
+    {
+        if(err)
+        {
+            console.log("Error when attempting to retrieve all roles");
+        }
+        inquirer.prompt(
+        [
+            {
+                type: "text",
+                name: "role_name",
+                message: "What is the name of the role?"
+            },
+            {
+                type: "number",
+                name: "salary",
+                message: "What is the salary of the role?"
+            },
+            {
+                type: "list",
+                name: "department",
+                message: "Which department does the role belong to?",
+                choices: rows
+            }
+        ]).then((data) =>
+        {
+            let i = 0;
+            for(i = 0; i < rows.length; i++)
+            {
+                if(data.department == rows[i].name)
+                {
+                    break;
+                }
+            }
+            const sql = `INSERT INTO role (title, salary, department_id)
+                        VALUES
+                            ("${data.role_name}", ${data.salary}, ${i+1})`;
+
+            db.query(sql, (err, result) =>
+            {
+                if(err)
+                {
+                    console.log("Error when attempting to add a department " + err.message);
+                    return;
+                }
+                console.log(`Added ${data.role_name} to the database`);
+                main();
+            });
+        });
+    });
 }
 
 // ****** Department Functions ******
@@ -108,7 +158,7 @@ function viewAllDepartments()
 
     db.query(sql, (err, rows) => {
         if (err) {
-            console.log("Error when attempting to view all departments")
+            console.log("Error when attempting to view all departments");
             return;
         }
         console.table(rows);
@@ -133,10 +183,10 @@ function addDepartment()
 
         db.query(sql, department_name, (err, result) => {
             if (err) {
-                console.log("Error when attempting to add a department")
+                console.log("Error when attempting to add a department");
                 return;
             }
-            console.table(`Added ${department_name} to the database`);
+            console.log(`Added ${department_name} to the database`);
             main();
         });
     })
