@@ -63,16 +63,135 @@ function viewAllEmployees()
       main();
     });
 }
+
 // Add Employee
 function addEmployee()
 {
-    console.log("Employee Added");
+    const sql = `SELECT title FROM role`;
+    db.query(sql, (err, roleList) =>
+    {
+        if(err)
+        {
+            console.log("Error when attempting to retrieve all roles");
+            return;
+        }
+        else
+        {
+            const newRoleList = roleList.map((role) => role.title);
+            const sql = `SELECT first_name, last_name FROM employee`;
+            db.query(sql, (err, employeeList) =>
+            {
+                if(err)
+                {
+                    console.log("Error when attempting to retrieve all employees");
+                    return;
+                }
+                const newEmployeeList = employeeList.map((employee) => employee.first_name + " " + employee.last_name);
+                newEmployeeList.unshift("None");
+
+                inquirer.prompt(
+                [
+                    {
+                        type: "text",
+                        name: "first_name",
+                        message: "What is the employee's first name?"
+                    },
+                    {
+                        type: "text",
+                        name: "last_name",
+                        message: "What is the employee's last name?"
+                    },
+                    {
+                        type: "list",
+                        name: "role",
+                        message: "What is the employee's role??",
+                        choices: newRoleList
+                    },
+                    {
+                        type: "list",
+                        name: "manager",
+                        message: "Who is the employee's manager?",
+                        choices: newEmployeeList
+                    }
+                ]).then((data) =>
+                {
+                    const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                                VALUES
+                                    ("${data.first_name}", "${data.last_name}", ${newRoleList.indexOf(data.role) + 1}, ${data.manager == "None" ? null : newEmployeeList.indexOf(data.manager)})`;
+        
+                    db.query(sql, (err, result) =>
+                    {
+                        if(err)
+                        {
+                            console.log("Error when attempting to add an employee " + err.message);
+                            return;
+                        }
+                        console.log(`Added ${data.first_name} ${data.last_name} to the database`);
+                        main();
+                    });
+                });
+            });
+        }
+    });
 }
 
 // Update Employee Info
 function updateEmployee()
 {
-    console.log("Employee Updated");
+    const sql = `SELECT title FROM role`;
+    db.query(sql, (err, roleList) =>
+    {
+        if(err)
+        {
+            console.log("Error when attempting to retrieve all roles");
+            return;
+        }
+        else
+        {
+            const newRoleList = roleList.map((role) => role.title);
+            const sql = `SELECT first_name, last_name FROM employee`;
+            db.query(sql, (err, employeeList) =>
+            {
+                if(err)
+                {
+                    console.log("Error when attempting to retrieve all employees");
+                    return;
+                }
+                const newEmployeeList = employeeList.map((employee) => employee.first_name + " " + employee.last_name);
+
+                inquirer.prompt(
+                [
+                    {
+                        type: "list",
+                        name: "employee",
+                        message: "Which employee's role do you want to update?",
+                        choices: newEmployeeList
+                    },
+                    {
+                        type: "list",
+                        name: "role",
+                        message: "Which role do you want to assign the selected employee?",
+                        choices: newRoleList
+                    }
+                ]).then((data) =>
+                {
+                    const sql = `UPDATE employee SET role_id = ${newRoleList.indexOf(data.role) + 1}
+                                WHERE id = ${newEmployeeList.indexOf(data.employee) + 1}`;
+        
+                    db.query(sql, (err, result) =>
+                    {
+                        if(err)
+                        {
+                            console.log("Error when attempting to update an employee's role " + err.message);
+                            return;
+                        }
+                        console.log(`Updated ${data.employee}'s role to ${data.role} in the database`);
+                        main();
+                    });
+                });
+            });
+        }
+    });
 }
 
 // ****** Role Functions ******
@@ -102,7 +221,7 @@ function addRole()
     {
         if(err)
         {
-            console.log("Error when attempting to retrieve all roles");
+            console.log("Error when attempting to retrieve all departments");
         }
         inquirer.prompt(
         [
